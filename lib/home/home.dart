@@ -25,13 +25,11 @@ class _HomeState extends State<Home> {
   String district = '';
   String province = '';
 
-  void getProvincetName(String value) {
-    province = value;
-  }
-
-  void getDistrictName(String value) {
-    district = value;
-    setState(() {});
+  void getAddress(String provinceName, String districtName) {
+    setState(() {
+      province = provinceName;
+      district = districtName;
+    });
   }
 
   @override
@@ -146,8 +144,8 @@ class _HomeState extends State<Home> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => getDistrict(
-                                  getProvinceName: getProvincetName,
-                                  getDistrictName: getDistrictName,
+                                  getAdress: getAddress,
+                                  screen: 'home',
                                 ),
                               ));
                         },

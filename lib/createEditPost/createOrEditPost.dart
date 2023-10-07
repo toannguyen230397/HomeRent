@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:home_rent/createEditPost/api/firebaseAPI.dart';
 import 'package:home_rent/createEditPost/widget/checkBoxWidget.dart';
+import 'package:home_rent/createEditPost/widget/googleMapWidget.dart';
 import 'package:home_rent/createEditPost/widget/imageWidget.dart';
 import 'package:home_rent/createEditPost/widget/numberWidget.dart';
 import 'package:home_rent/createEditPost/widget/textFieldWidget.dart';
@@ -28,14 +29,14 @@ class _CreateOrEditPostState extends State<CreateOrEditPost> {
   TextEditingController roomNumber_Controller = TextEditingController();
   TextEditingController floorNumber_Controller = TextEditingController();
   TextEditingController ward_Controller = TextEditingController();
-  TextEditingController latitude_Controller = TextEditingController();
-  TextEditingController longitude_Controller = TextEditingController();
   TextEditingController desc_Controller = TextEditingController();
 
 
   String docID = '';
   String district = '';
   String province = '';
+  String latitude= '';
+  String longitude= '';
   List<File> houseImages = [];
   List<File> furnitureImages = [];
   List<dynamic> furniture = [];
@@ -43,13 +44,18 @@ class _CreateOrEditPostState extends State<CreateOrEditPost> {
   List<dynamic> houseImagesURL = [];
   List<dynamic> furnitureImagesURL = [];
 
-  void getProvincetName(String value) {
-    province = value;
+  void getAddress(String provinceName, String districtName) {
+    setState(() {
+      province = provinceName;
+      district = districtName;
+    });
   }
 
-  void getDistrictName(String value) {
-    district = value;
-    setState(() {});
+  void getPosition(String latitudeValue, String longitudeValue) {
+    setState(() {
+      latitude = latitudeValue;
+      longitude = longitudeValue;
+    });
   }
 
   void checkScreen() {
@@ -72,8 +78,8 @@ class _CreateOrEditPostState extends State<CreateOrEditPost> {
       province = datas['province'];
       district = datas['district'];
       ward_Controller.text = datas['ward'];
-      latitude_Controller.text = datas['latitude'];
-      longitude_Controller.text = datas['longitude'];
+      latitude = datas['latitude'];
+      longitude = datas['longitude'];
       desc_Controller.text = datas['desc'];  
     }
   }
@@ -271,25 +277,82 @@ class _CreateOrEditPostState extends State<CreateOrEditPost> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => getDistrict(
-                              getProvinceName: getProvincetName,
-                              getDistrictName: getDistrictName,
+                              getAdress: getAddress,
+                              screen: 'createEdit',
                             ),
                           ));
                     },
                     child: Row(
                       children: [
-                        Text(
-                          province == '' && district == ''
-                              ? 'Chọn tỉnh thành, quận huyện'
-                              : '${province}, ${district}',
-                          style: TextStyle(
-                              color: province == '' && district == ''
-                                  ? Colors.teal.shade300.withOpacity(0.5)
-                                  : Colors.teal.shade300,
-                              fontWeight: FontWeight.bold),
+                        Expanded(
+                          child: Text(
+                            province == '' && district == ''
+                                ? 'Chọn tỉnh thành, quận huyện'
+                                : '${province}, ${district}',
+                            style: TextStyle(
+                                color: province == '' && district == ''
+                                    ? Colors.teal.shade300.withOpacity(0.5)
+                                    : Colors.teal.shade300,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                         Icon(Icons.arrow_drop_down)
                       ],
+                    ),
+                  ),
+                ),
+                Container(
+                  width: screenSize.width,
+                  height: screenSize.height * 0.06,
+                  margin:
+                      EdgeInsets.only(top: 20, bottom: 10, left: 40, right: 40),
+                  padding: EdgeInsets.only(left: 10, right: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.blueGrey.shade300,
+                        blurRadius: 20.0,
+                        spreadRadius: -20.0,
+                        offset: Offset(0.0, 25.0),
+                      )
+                    ],
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      if(province.isNotEmpty || district.isNotEmpty) {
+                        String address = '${province}, ${district}';
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => GoogleMapWidget(
+                              getPosition: getPosition,
+                              address: address,
+                            ),
+                          ));
+                      }
+                    },
+                    child: Container(
+                      child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                  latitude == '' && longitude == ''
+                                      ? 'Chọn vĩ độ, kinh độ'
+                                      : '${latitude}, ${longitude}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      color: latitude.isEmpty && longitude.isEmpty
+                                          ? Colors.teal.shade300.withOpacity(0.5)
+                                          : Colors.teal.shade300,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                            ),
+                            Icon(Icons.arrow_drop_down)
+                          ],
+                        ),
                     ),
                   ),
                 ),
@@ -300,23 +363,7 @@ class _CreateOrEditPostState extends State<CreateOrEditPost> {
                   line: 1,
                   enable: true,
                   controller: ward_Controller,
-                ),
-                TextFieldWidget(
-                  label: 'Vĩ độ:',
-                  icon: Icon(Icons.location_on),
-                  type: 'number',
-                  line: 1,
-                  enable: true,
-                  controller: latitude_Controller,
-                ),
-                TextFieldWidget(
-                  label: 'Kinh độ:',
-                  icon: Icon(Icons.location_on),
-                  type: 'number',
-                  line: 1,
-                  enable: true,
-                  controller: longitude_Controller,
-                ),
+                ),               
                 TextFieldWidget(
                   label: 'Viết mô tả:',
                   icon: Icon(Icons.note),
@@ -333,8 +380,6 @@ class _CreateOrEditPostState extends State<CreateOrEditPost> {
                     final price = price_Controller.text.isEmpty ? 0 : int.parse(price_Controller.text);
                     final rooms = roomNumber_Controller.text;
                     final floors = floorNumber_Controller.text;
-                    final latitude = latitude_Controller.text;
-                    final longitude = longitude_Controller.text;
                     final ward = ward_Controller.text;
                     final desc = desc_Controller.text;
                     bool textFieldEmpty = tenNha.isEmpty || price == 0 || rooms == "0" || floors == "0" || latitude.isEmpty || longitude.isEmpty || ward.isEmpty || desc.isEmpty;

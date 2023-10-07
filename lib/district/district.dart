@@ -4,9 +4,9 @@ import 'package:home_rent/district/widget/itemList.dart';
 
 class getDistrict extends StatefulWidget {
   const getDistrict(
-      {super.key, required this.getProvinceName, required this.getDistrictName});
-  final Function getProvinceName;    
-  final Function getDistrictName;
+      {super.key, required this.getAdress, required this.screen});    
+  final Function getAdress;
+  final String screen;
   @override
   State<getDistrict> createState() => _getDistrictState();
 }
@@ -14,11 +14,12 @@ class getDistrict extends StatefulWidget {
 class _getDistrictState extends State<getDistrict> {
   final controller = PageController();
   String provinceCode = '';
+  String provinceName = '';
+  String districtName = '';
 
   void getProvinceCode(String name, String code) {
     provinceCode = code;
-    widget.getProvinceName(name);
-    print(name);
+    provinceName = name;
     FocusManager.instance.primaryFocus?.unfocus();
     controller.animateToPage(1, duration: const Duration(seconds: 1), curve: Curves.easeInOut);
   }
@@ -32,8 +33,16 @@ class _getDistrictState extends State<getDistrict> {
   }
 
   void getDistrictName(String name) {
-    print(name);
-    widget.getDistrictName(name);
+    districtName = name;
+    print('${provinceName}, ${districtName}');
+    widget.getAdress(provinceName, districtName);
+    Navigator.pop(context);
+  }
+
+  void getLocation(String name) {
+    districtName = name;
+    String address = '${provinceName}, ${districtName}';
+    widget.getAdress(address);
     Navigator.pop(context);
   }
 
@@ -81,7 +90,7 @@ class _getDistrictState extends State<getDistrict> {
                       .toLowerCase()
                       .contains(provinceCode.toLowerCase()))
                   .toList();
-                  return itemList(data: filteredData, handleSelected: getDistrictName, page: 'district', handleBack: handleBack,);
+                  return itemList(data: filteredData, handleSelected: widget.screen == 'map' ? getLocation : getDistrictName, page: 'district', handleBack: handleBack,);
                 }
               })
         ],
